@@ -741,6 +741,7 @@ void Weapon_RocketLauncher_Fire (edict_t *ent)
 {
 	vec3_t	offset, start;
 	vec3_t	forward, right;
+	vec3_t forwardLeft, forwardRight;
 	int		damage;
 	float	damage_radius;
 	int		radius_damage;
@@ -760,8 +761,13 @@ void Weapon_RocketLauncher_Fire (edict_t *ent)
 	ent->client->kick_angles[0] = -1;
 
 	VectorSet(offset, 8, 8, ent->viewheight-8);
+	VectorSet(forwardLeft, forward[0]-.1, forward[1], forward[2]);
+	VectorSet(forwardRight, forward[0]+.1, forward[1], forward[2]);
+
 	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
-	fire_rocket (ent, start, forward, damage, 650, damage_radius, radius_damage);
+	fire_rocket (ent, start, forward, damage, 250, damage_radius, radius_damage);
+	fire_rocket(ent, start, forwardLeft, damage, 250, damage_radius, radius_damage);
+	fire_rocket(ent, start, forwardRight, damage, 250, damage_radius, radius_damage);
 
 	// send muzzle flash
 	gi.WriteByte (svc_muzzleflash);
