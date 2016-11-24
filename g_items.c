@@ -466,7 +466,7 @@ qboolean Pickup_Ammo (edict_t *ent, edict_t *other)
 	int			oldcount;
 	int			count;
 	qboolean	weapon;
-
+	return true; //Stop players from having their weapon switched to grenades.
 	weapon = (ent->item->flags & IT_WEAPON);
 	if ( (weapon) && ( (int)dmflags->value & DF_INFINITE_AMMO ) )
 		count = 1000;
@@ -1277,7 +1277,7 @@ always owned, never in the world
 		Weapon_Blaster,
 		"misc/w_pkup.wav",
 		NULL, 0,
-		"models/weapons/v_blast/tris.md2",
+		"", //No model on blaster to simulate ki blasts coming from the Player's hands
 /* icon */		"w_blaster",
 /* pickup */	"Blaster",
 		0,
