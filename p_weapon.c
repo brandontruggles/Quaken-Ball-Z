@@ -358,6 +358,8 @@ A generic function to handle the basics of weapon thinking
 #define FRAME_IDLE_FIRST		(FRAME_FIRE_LAST + 1)
 #define FRAME_DEACTIVATE_FIRST	(FRAME_IDLE_LAST + 1)
 
+void Weapon_Blaster_Fire (edict_t *ent);
+
 void Weapon_Generic (edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST, int FRAME_IDLE_LAST, int FRAME_DEACTIVATE_LAST, int *pause_frames, int *fire_frames, void (*fire)(edict_t *ent))
 {
 	int		n;
@@ -434,7 +436,17 @@ void Weapon_Generic (edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 	{
 		if ( ((ent->client->latched_buttons|ent->client->buttons) & BUTTON_ATTACK) )
 		{
+			if(ent->client->pers.weapon && strcmp(ent->client->pers.weapon->pickup_name, "Blaster") == 0)
+			{
+				if(ent->client->charge_counter < 10)
+				{
+					ent->client->charge_counter++; //Charge up for the larger ki blast
+					return;
+				}
+			}
+
 			ent->client->latched_buttons &= ~BUTTON_ATTACK;
+
 			if ((!ent->client->ammo_index) || 
 				( ent->client->pers.inventory[ent->client->ammo_index] >= ent->client->pers.weapon->quantity))
 			{
@@ -466,6 +478,15 @@ void Weapon_Generic (edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 		}
 		else
 		{
+			if(ent->client->pers.weapon && strcmp(ent->client->pers.weapon->pickup_name, "Blaster") == 0)
+			{
+				if(ent->client->charge_counter > 0)
+				{
+					ent->client->charge_counter = 0; //Stop the current ki blast from charging and fire a small ki blast
+					Weapon_Blaster_Fire(ent);	
+				}
+			}
+
 			if (ent->client->ps.gunframe == FRAME_IDLE_LAST)
 			{
 				ent->client->ps.gunframe = FRAME_IDLE_FIRST;
@@ -837,12 +858,23 @@ void Weapon_Blaster_Fire (edict_t *ent)
 	ent->client->ps.gunframe++;
 }
 
+void weapon_bfg_fire(edict_t *ent);
+
+void weapon_ki_fire(edict_t *ent) //Definition for ki blasts
+{
+	if(ent->client->charge_counter == 10) //The ki blast is fully charged, so we fire off a BFG bullet and reset the charge counter
+	{
+		weapon_bfg_fire(ent);
+		ent->client->charge_counter = 0;
+	}
+}
+
 void Weapon_Blaster (edict_t *ent)
 {
 	static int	pause_frames[]	= {19, 32, 0};
 	static int	fire_frames[]	= {5, 0};
 
-	Weapon_Generic (ent, 4, 8, 52, 55, pause_frames, fire_frames, Weapon_Blaster_Fire);
+	Weapon_Generic (ent, 4, 8, 52, 55, pause_frames, fire_frames, weapon_ki_fire);
 }
 
 
@@ -1357,7 +1389,7 @@ void weapon_bfg_fire (edict_t *ent)
 	else
 		damage = 500;
 
-	if (ent->client->ps.gunframe == 9)
+	/*if (ent->client->ps.gunframe == 9)
 	{
 		// send muzzle flash
 		gi.WriteByte (svc_muzzleflash);
@@ -1369,15 +1401,15 @@ void weapon_bfg_fire (edict_t *ent)
 
 		PlayerNoise(ent, start, PNOISE_WEAPON);
 		return;
-	}
+	}*/
 
 	// cells can go down during windup (from power armor hits), so
 	// check again and abort firing if we don't have enough now
-	if (ent->client->pers.inventory[ent->client->ammo_index] < 50)
+	/*if (ent->client->pers.inventory[ent->client->ammo_index] < 50)
 	{
 		ent->client->ps.gunframe++;
 		return;
-	}
+	}*/
 
 	if (is_quad)
 		damage *= 4;
@@ -1399,8 +1431,8 @@ void weapon_bfg_fire (edict_t *ent)
 
 	PlayerNoise(ent, start, PNOISE_WEAPON);
 
-	if (! ( (int)dmflags->value & DF_INFINITE_AMMO ) )
-		ent->client->pers.inventory[ent->client->ammo_index] -= 50;
+	/*if (! ( (int)dmflags->value & DF_INFINITE_AMMO ) )
+		ent->client->pers.inventory[ent->client->ammo_index] -= 50;*/
 }
 
 void Weapon_BFG (edict_t *ent)

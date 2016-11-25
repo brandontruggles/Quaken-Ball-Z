@@ -880,6 +880,7 @@ struct gclient_s
 	int			buttons;
 	int			oldbuttons;
 	int			latched_buttons;
+	int			charge_counter;
 
 	qboolean	weapon_thunk;
 
