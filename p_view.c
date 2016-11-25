@@ -491,6 +491,7 @@ void P_FallingDamage (edict_t *ent)
 	if (ent->movetype == MOVETYPE_NOCLIP)
 		return;
 
+
 	if ((ent->client->oldvelocity[2] < 0) && (ent->velocity[2] > ent->client->oldvelocity[2]) && (!ent->groundentity))
 	{
 		delta = ent->client->oldvelocity[2];
@@ -511,6 +512,11 @@ void P_FallingDamage (edict_t *ent)
 	if (ent->waterlevel == 1)
 		delta *= 0.5;
 
+	if(ent->movetype == MOVETYPE_QUAKENBALLZ_FLY)
+	{
+		ent->movetype = MOVETYPE_WALK;
+		return;
+	}
 	if (delta < 1)
 		return;
 

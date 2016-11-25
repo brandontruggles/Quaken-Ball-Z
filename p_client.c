@@ -1725,6 +1725,13 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		} else
 			client->ps.pmove.pm_flags &= ~PMF_JUMP_HELD;
 	}
+	else
+	{
+		if(client->ps.pmove.pm_flags & PMF_JUMP_HELD)
+		{
+			ent->movetype = MOVETYPE_QUAKENBALLZ_FLY;
+		}
+	}
 
 	// update chase cam if being followed
 	for (i = 1; i <= maxclients->value; i++) {
