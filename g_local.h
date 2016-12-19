@@ -162,6 +162,8 @@ typedef enum
 #define PNOISE_WEAPON			1
 #define PNOISE_IMPACT			2
 
+#define MAX_KI_VALUE			100
+
 
 // edict->movetype values
 typedef enum
@@ -710,6 +712,8 @@ void ThrowDebris (edict_t *self, char *modelname, float speed, vec3_t origin);
 qboolean fire_hit (edict_t *self, vec3_t aim, int damage, int kick);
 void fire_bullet (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int hspread, int vspread, int mod);
 void fire_shotgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int hspread, int vspread, int count, int mod);
+void fire_punch(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int mod);
+void fire_kick(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int mod);
 void fire_blaster (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int effect, qboolean hyper);
 void fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius);
 void fire_grenade2 (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius, qboolean held);
@@ -881,6 +885,7 @@ struct gclient_s
 	int			buttons;
 	int			oldbuttons;
 	int			latched_buttons;
+	int			ki_value;
 	int			charge_counter;
 
 	qboolean	weapon_thunk;

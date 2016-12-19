@@ -112,6 +112,105 @@ fire_lead
 This is an internal support routine used for bullet/pellet based weapons.
 =================
 */
+
+static void fire_melee_lead(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int te_impact, int mod)
+{
+	trace_t		tr;
+	vec3_t		dir;
+	vec3_t		forward, right, up;
+	vec3_t		end;
+	float		r;
+	float		u;
+	vec3_t		water_start;
+	qboolean	water = false;
+	int			content_mask = MASK_SHOT | MASK_WATER;
+
+	tr = gi.trace (self->s.origin, NULL, NULL, start, self, MASK_SHOT);
+	if (!(tr.fraction < 1.0))
+	{
+		vectoangles (aimdir, dir);
+		AngleVectors (dir, forward, right, up);
+
+		VectorMA (start, 100, forward, end);
+		VectorMA (end, r, right, end);
+		VectorMA (end, u, up, end);
+
+		if (gi.pointcontents (start) & MASK_WATER)
+		{
+			water = true;
+			VectorCopy (start, water_start);
+			content_mask &= ~MASK_WATER;
+		}
+
+		tr = gi.trace (start, NULL, NULL, end, self, content_mask);
+
+		// see if we hit water
+		if (tr.contents & MASK_WATER)
+		{
+			int		color;
+
+			water = true;
+			VectorCopy (tr.endpos, water_start);
+
+			if (!VectorCompare (start, tr.endpos))
+			{
+				if (tr.contents & CONTENTS_WATER)
+				{
+					if (strcmp(tr.surface->name, "*brwater") == 0)
+						color = SPLASH_BROWN_WATER;
+					else
+						color = SPLASH_BLUE_WATER;
+				}
+				else if (tr.contents & CONTENTS_SLIME)
+					color = SPLASH_SLIME;
+				else if (tr.contents & CONTENTS_LAVA)
+					color = SPLASH_LAVA;
+				else
+					color = SPLASH_UNKNOWN;
+
+				if (color != SPLASH_UNKNOWN)
+				{
+					gi.WriteByte (svc_temp_entity);
+					gi.WriteByte (TE_SPLASH);
+					gi.WriteByte (8);
+					gi.WritePosition (tr.endpos);
+					gi.WriteDir (tr.plane.normal);
+					gi.WriteByte (color);
+					gi.multicast (tr.endpos, MULTICAST_PVS);
+				}
+			}
+		}
+	}
+	// send gun puff / flash
+	if (!((tr.surface) && (tr.surface->flags & SURF_SKY)))
+	{
+		if (tr.fraction < 1.0)
+		{
+			if (tr.ent->takedamage)
+			{
+				if(self->client->ki_value + 5 <= MAX_KI_VALUE) //Build ki when melee attacks connect
+					self->client->ki_value += 5;
+				T_Damage (tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal, damage, kick, DAMAGE_BULLET, mod);
+			}
+			else
+			{
+				if (strncmp (tr.surface->name, "sky", 3) != 0)
+				{
+					gi.WriteByte (svc_temp_entity);
+					gi.WriteByte (te_impact);
+					gi.WritePosition (tr.endpos);
+					gi.WriteDir (tr.plane.normal);
+					gi.multicast (tr.endpos, MULTICAST_PVS);
+
+					if (self->client)
+						PlayerNoise(self, tr.endpos, PNOISE_IMPACT);
+				}
+			}
+		}
+	}
+}
+
+
 static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int te_impact, int hspread, int vspread, int mod)
 {
 	trace_t		tr;
@@ -276,6 +375,15 @@ void fire_shotgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int k
 		fire_lead (self, start, aimdir, damage, kick, TE_SHOTGUN, hspread, vspread, mod);
 }
 
+void fire_punch(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int mod)
+{
+	fire_melee_lead(self, start, aimdir, damage, kick, TE_BLOOD, mod);
+}
+
+void fire_kick(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int mod)
+{
+	fire_melee_lead(self, start, aimdir, damage, kick, TE_MOREBLOOD, mod);
+}
 
 /*
 =================

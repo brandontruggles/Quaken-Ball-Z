@@ -100,7 +100,7 @@ qboolean Pickup_Weapon (edict_t *ent, edict_t *other)
 {
 	int			index;
 	gitem_t		*ammo;
-	return true; //Stop the players from switching weapons
+	return true; //Stop the players from switching weapons on pickup
 	index = ITEM_INDEX(ent->item);
 
 	if ( ( ((int)(dmflags->value) & DF_WEAPONS_STAY) || coop->value) 
@@ -482,8 +482,9 @@ void Weapon_Generic (edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 			{
 				if(ent->client->charge_counter > 0)
 				{
-					ent->client->charge_counter = 0; //Stop the current ki blast from charging and fire a small ki blast
-					Weapon_Blaster_Fire(ent);	
+					ent->client->charge_counter = 0; //Stop the current ki blast from charging and fire a small ki blast if possible
+					if(ent->client->ki_value >= 5)
+						Weapon_Blaster_Fire(ent);
 				}
 			}
 
@@ -845,7 +846,6 @@ void Blaster_Fire (edict_t *ent, vec3_t g_offset, int damage, qboolean hyper, in
 	PlayerNoise(ent, start, PNOISE_WEAPON);
 }
 
-
 void Weapon_Blaster_Fire (edict_t *ent)
 {
 	int		damage;
@@ -854,6 +854,7 @@ void Weapon_Blaster_Fire (edict_t *ent)
 		damage = 15;
 	else
 		damage = 10;
+	ent->client->ki_value -= 5;
 	Blaster_Fire (ent, vec3_origin, damage, false, EF_BLASTER);
 	ent->client->ps.gunframe++;
 }
@@ -864,9 +865,108 @@ void weapon_ki_fire(edict_t *ent) //Definition for ki blasts
 {
 	if(ent->client->charge_counter == 10) //The ki blast is fully charged, so we fire off a BFG bullet and reset the charge counter
 	{
-		weapon_bfg_fire(ent);
+		gi.bprintf(_DEBUG, "%i\n", ent->client->ki_value);
+		if(ent->client->ki_value >= 20)
+			weapon_bfg_fire(ent);
 		ent->client->charge_counter = 0;
 	}
+}
+
+void weapon_punch_fire(edict_t * ent) //Definition for punches (modified weapon_shotgun_fire)
+{
+	vec3_t		start;
+	vec3_t		forward, right;
+	vec3_t		offset;
+	int			damage = 4;
+	int			kick = 8;
+
+	if (ent->client->ps.gunframe == 9)
+	{
+		ent->client->ps.gunframe++;
+		return;
+	}
+
+	AngleVectors (ent->client->v_angle, forward, right, NULL);
+
+	VectorScale (forward, -2, ent->client->kick_origin);
+	ent->client->kick_angles[0] = -2;
+
+	VectorSet(offset, 0, 0, ent->viewheight);
+	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
+
+	if (is_quad)
+	{
+		damage *= 4;
+		kick *= 4;
+	}
+
+	fire_punch (ent, start, forward, damage, kick, MOD_SHOTGUN);
+
+	ent->client->ps.gunframe++;
+	PlayerNoise(ent, start, PNOISE_WEAPON);
+}
+
+void weapon_kick_fire (edict_t *ent) //Definition for kicks (modified weapon_supershotgun_fire)
+{
+	vec3_t		start;
+	vec3_t		forward, right;
+	vec3_t		offset;
+	vec3_t		v;
+	int			damage = 6;
+	int			kick = 12;
+
+	AngleVectors (ent->client->v_angle, forward, right, NULL);
+
+	VectorScale (forward, -2, ent->client->kick_origin);
+	ent->client->kick_angles[0] = -2;
+
+	VectorSet(offset, 0, 0,  ent->viewheight);
+	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
+
+	if (is_quad)
+	{
+		damage *= 4;
+		kick *= 4;
+	}
+
+	v[PITCH] = ent->client->v_angle[PITCH];
+	v[YAW]   = ent->client->v_angle[YAW] - 5;
+	v[ROLL]  = ent->client->v_angle[ROLL];
+	AngleVectors (v, forward, NULL, NULL);
+	fire_kick(ent, start, forward, damage, kick, MOD_SSHOTGUN);
+
+	ent->client->ps.gunframe++;
+	PlayerNoise(ent, start, PNOISE_WEAPON);
+}
+
+void weapon_ki_charge_fire(edict_t * ent)
+{
+
+}
+
+void weapon_kaio_ken_fire(edict_t * ent)
+{
+
+}
+
+void weapon_super_saiyan_fire(edict_t * ent)
+{
+
+}
+
+void weapon_teleport_attack_fire(edict_t * ent)
+{
+
+}
+
+void weapon_Z_sword_fire(edict_t * ent)
+{
+
+}
+
+void special_beam_cannon_fire(edict_t * ent)
+{
+
 }
 
 void Weapon_Blaster (edict_t *ent)
@@ -876,7 +976,6 @@ void Weapon_Blaster (edict_t *ent)
 
 	Weapon_Generic (ent, 4, 8, 52, 55, pause_frames, fire_frames, weapon_ki_fire);
 }
-
 
 void Weapon_HyperBlaster_Fire (edict_t *ent)
 {
@@ -1245,7 +1344,7 @@ void Weapon_Shotgun (edict_t *ent)
 	static int	pause_frames[]	= {22, 28, 34, 0};
 	static int	fire_frames[]	= {8, 9, 0};
 
-	Weapon_Generic (ent, 7, 18, 36, 39, pause_frames, fire_frames, weapon_shotgun_fire);
+	Weapon_Generic (ent, 7, 18, 36, 39, pause_frames, fire_frames, weapon_punch_fire);
 }
 
 
@@ -1299,7 +1398,7 @@ void Weapon_SuperShotgun (edict_t *ent)
 	static int	pause_frames[]	= {29, 42, 57, 0};
 	static int	fire_frames[]	= {7, 0};
 
-	Weapon_Generic (ent, 6, 17, 57, 61, pause_frames, fire_frames, weapon_supershotgun_fire);
+	Weapon_Generic (ent, 6, 17, 57, 61, pause_frames, fire_frames, weapon_kick_fire);
 }
 
 
@@ -1389,6 +1488,7 @@ void weapon_bfg_fire (edict_t *ent)
 	else
 		damage = 500;
 
+	ent->client->ki_value -= 20;
 	/*if (ent->client->ps.gunframe == 9)
 	{
 		// send muzzle flash

@@ -577,6 +577,21 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 //=======================================================================
 
+
+void grantAllWeapons(gclient_t * client) //Helper function to give the player all weapons on spawn
+{
+	int i;
+	for (i=0 ; i<game.num_items ; i++)
+	{
+		gitem_t * it = itemlist + i;
+		if (!it->pickup)
+			continue;
+		if (!(it->flags & IT_WEAPON))
+			continue;
+		client->pers.inventory[i] += 1;
+	}
+}
+
 /*
 ==============
 InitClientPersistant
@@ -594,8 +609,9 @@ void InitClientPersistant (gclient_t *client)
 	item = FindItem("Blaster");
 	client->pers.selected_item = ITEM_INDEX(item);
 	client->pers.inventory[client->pers.selected_item] = 1;
-
 	client->pers.weapon = item;
+
+	grantAllWeapons(client); //Give the newly spawned player all weapons
 
 	client->pers.health			= 100;
 	client->pers.max_health		= 100;
