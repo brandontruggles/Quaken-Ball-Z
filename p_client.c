@@ -1184,6 +1184,8 @@ void PutClientInServer (edict_t *ent)
 	// clear playerstate values
 	memset (&ent->client->ps, 0, sizeof(client->ps));
 
+	client->ki_value = 20;
+	
 	client->ps.pmove.origin[0] = spawn_origin[0]*8;
 	client->ps.pmove.origin[1] = spawn_origin[1]*8;
 	client->ps.pmove.origin[2] = spawn_origin[2]*8;

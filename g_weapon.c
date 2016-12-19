@@ -359,6 +359,10 @@ void fire_bullet (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int ki
 	fire_lead (self, start, aimdir, damage, kick, TE_GUNSHOT, hspread, vspread, mod);
 }
 
+void fire_charge_bullet(edict_t *self, vec3_t start, vec3_t aimdir,  int damage, int kick, int hspread, int vspread, int mod, temp_event_t tempEvent)
+{
+	fire_lead(self, start, aimdir, damage, kick, tempEvent, hspread, vspread, mod);
+}
 
 /*
 =================

@@ -156,6 +156,8 @@ void ChangeWeapon (edict_t *ent)
 {
 	int i;
 
+	ent->client->charge_counter = 0;
+
 	if (ent->client->grenade_time)
 	{
 		ent->client->grenade_time = level.time;
@@ -431,7 +433,6 @@ void Weapon_Generic (edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 		}
 		return;
 	}
-
 	if (ent->client->weaponstate == WEAPON_READY)
 	{
 		if ( ((ent->client->latched_buttons|ent->client->buttons) & BUTTON_ATTACK) )
@@ -743,12 +744,31 @@ void weapon_grenadelauncher_fire (edict_t *ent)
 		ent->client->pers.inventory[ent->client->ammo_index]--;
 }
 
+void activate_super_saiyan(edict_t * ent)
+{
+	ent->client->ki_value -= 100;
+	ent->client->inKaioKen = false;
+	ent->client->inSuperSaiyan = true;
+	VectorSet(ent->velocity, 100, 100, 100);
+	
+	gi.bprintf(_DEBUG, "Activated super saiyan!\n");
+}
+
+void weapon_super_saiyan_fire(edict_t * ent)
+{
+	if(ent->client->ki_value == 100 && !ent->client->inKaioKen)
+	{
+		activate_super_saiyan(ent);
+	}
+	ent->client->ps.gunframe++;
+}
+
 void Weapon_GrenadeLauncher (edict_t *ent)
 {
 	static int	pause_frames[]	= {34, 51, 59, 0};
 	static int	fire_frames[]	= {6, 0};
 
-	Weapon_Generic (ent, 5, 16, 59, 64, pause_frames, fire_frames, weapon_grenadelauncher_fire);
+	Weapon_Generic (ent, 5, 16, 59, 64, pause_frames, fire_frames, weapon_super_saiyan_fire);
 }
 
 /*
@@ -865,9 +885,10 @@ void weapon_ki_fire(edict_t *ent) //Definition for ki blasts
 {
 	if(ent->client->charge_counter == 10) //The ki blast is fully charged, so we fire off a BFG bullet and reset the charge counter
 	{
-		gi.bprintf(_DEBUG, "%i\n", ent->client->ki_value);
 		if(ent->client->ki_value >= 20)
 			weapon_bfg_fire(ent);
+		else
+			ent->client->ps.gunframe++;
 		ent->client->charge_counter = 0;
 	}
 }
@@ -941,17 +962,87 @@ void weapon_kick_fire (edict_t *ent) //Definition for kicks (modified weapon_sup
 
 void weapon_ki_charge_fire(edict_t * ent)
 {
+	int	i;
+	vec3_t		start;
+	vec3_t		forward, right;
+	vec3_t		angles;
+	int			damage = 8;
+	int			kick = 2;
+	vec3_t		offset;
 
+	if (!(ent->client->buttons & BUTTON_ATTACK))
+	{
+		ent->client->machinegun_shots = 0;
+		ent->client->ps.gunframe++;
+		return;
+	}
+
+	if (ent->client->ps.gunframe == 5)
+		ent->client->ps.gunframe = 4;
+	else
+		ent->client->ps.gunframe = 5;
+
+	if (is_quad)
+	{
+		damage *= 4;
+		kick *= 4;
+	}
+
+	for (i=1 ; i<3 ; i++)
+	{
+		ent->client->kick_origin[i] = crandom() * 0.35;
+		ent->client->kick_angles[i] = crandom() * 0.7;
+	}
+	ent->client->kick_origin[0] = crandom() * 0.35;
+	ent->client->kick_angles[0] = ent->client->machinegun_shots * -1.5;
+
+	if(ent->client->charge_counter < 10)
+	{
+		ent->client->charge_counter++;
+	}
+	else
+	{
+		ent->client->charge_counter = 0;
+		if(ent->client->ki_value + 5 <= MAX_KI_VALUE)
+			ent->client->ki_value += 5;
+	}
+
+	// get start / end positions
+	VectorAdd (ent->client->v_angle, ent->client->kick_angles, angles);
+	AngleVectors (angles, forward, right, NULL);
+	VectorSet(offset, 0, 0, ent->viewheight-40);
+	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
+	fire_charge_bullet (ent, start, forward, damage, kick, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_MACHINEGUN, TE_SPARKS);
+
+	ent->client->anim_priority = ANIM_ATTACK;
+	if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
+	{
+		ent->s.frame = FRAME_crattak1 - (int) (random()+0.25);
+		ent->client->anim_end = FRAME_crattak9;
+	}
+	else
+	{
+		ent->s.frame = FRAME_attack1 - (int) (random()+0.25);
+		ent->client->anim_end = FRAME_attack8;
+	}
+}
+
+void activate_kaio_ken(edict_t * ent)
+{
+	ent->client->ki_value -= 50;
+	ent->client->inSuperSaiyan = false;
+	ent->client->inKaioKen = true;
+	ent->moveinfo.speed = 40;
+	gi.bprintf(_DEBUG, "Activated kaio ken!\n");
 }
 
 void weapon_kaio_ken_fire(edict_t * ent)
 {
-
-}
-
-void weapon_super_saiyan_fire(edict_t * ent)
-{
-
+	if(ent->client->ki_value >= 50 && !ent->client->inKaioKen)
+	{
+		activate_kaio_ken(ent);
+	}
+	ent->client->ps.gunframe++;
 }
 
 void weapon_teleport_attack_fire(edict_t * ent)
@@ -964,7 +1055,7 @@ void weapon_Z_sword_fire(edict_t * ent)
 
 }
 
-void special_beam_cannon_fire(edict_t * ent)
+void weapon_special_beam_cannon_fire(edict_t * ent)
 {
 
 }
@@ -1153,7 +1244,7 @@ void Weapon_Machinegun (edict_t *ent)
 	static int	pause_frames[]	= {23, 45, 0};
 	static int	fire_frames[]	= {4, 5, 0};
 
-	Weapon_Generic (ent, 3, 5, 45, 49, pause_frames, fire_frames, Machinegun_Fire);
+	Weapon_Generic (ent, 3, 5, 45, 49, pause_frames, fire_frames, weapon_ki_charge_fire);
 }
 
 void Chaingun_Fire (edict_t *ent)
@@ -1281,7 +1372,7 @@ void Weapon_Chaingun (edict_t *ent)
 	static int	pause_frames[]	= {38, 43, 51, 61, 0};
 	static int	fire_frames[]	= {5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 0};
 
-	Weapon_Generic (ent, 4, 31, 61, 64, pause_frames, fire_frames, Chaingun_Fire);
+	Weapon_Generic (ent, 4, 31, 61, 64, pause_frames, fire_frames, weapon_kaio_ken_fire);
 }
 
 

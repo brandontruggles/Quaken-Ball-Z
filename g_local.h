@@ -711,6 +711,7 @@ qboolean FacingIdeal(edict_t *self);
 void ThrowDebris (edict_t *self, char *modelname, float speed, vec3_t origin);
 qboolean fire_hit (edict_t *self, vec3_t aim, int damage, int kick);
 void fire_bullet (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int hspread, int vspread, int mod);
+void fire_charge_bullet (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int hspread, int vspread, int mod, temp_event_t tempEvent);
 void fire_shotgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int hspread, int vspread, int count, int mod);
 void fire_punch(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int mod);
 void fire_kick(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int mod);
@@ -888,6 +889,8 @@ struct gclient_s
 	int			ki_value;
 	int			charge_counter;
 
+	qboolean	inKaioKen;
+	qboolean	inSuperSaiyan;
 	qboolean	weapon_thunk;
 
 	gitem_t		*newweapon;

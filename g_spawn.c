@@ -753,6 +753,13 @@ char *dm_statusbar =
   "string2 \"SPECTATOR MODE\" "
 "endif "
 
+// Ki Meter
+"if 18"
+	"xv 50 "
+	"yb -100 "
+	"string2 \"hi\" "
+"endif "
+
 // chase camera
 "if 16 "
   "xv 0 "
