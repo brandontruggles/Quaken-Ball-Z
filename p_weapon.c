@@ -171,7 +171,7 @@ void ChangeWeapon (edict_t *ent)
 	gi.cprintf (ent, PRINT_HIGH, "You selected your %s attack!\n", ent->client->newweapon->dbzname);
 	ent->client->newweapon = NULL;
 	ent->client->machinegun_shots = 0;
-
+	
 	// set visible model
 	if (ent->s.modelindex == 255) {
 		if (ent->client->pers.weapon)
@@ -1798,10 +1798,7 @@ void weapon_bfg_fire (edict_t *ent)
 	int		damage;
 	float	damage_radius = 1000;
 
-	if (deathmatch->value)
-		damage = 200;
-	else
-		damage = 500;
+	damage = 200;
 
 	ent->client->ki_value -= 20;
 	/*if (ent->client->ps.gunframe == 9)

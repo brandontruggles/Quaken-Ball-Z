@@ -397,7 +397,6 @@ void TossClientWeapon (edict_t *self)
 
 	if (!deathmatch->value)
 		return;
-
 	item = self->client->pers.weapon;
 	if (! self->client->pers.inventory[self->client->ammo_index] )
 		item = NULL;
@@ -482,7 +481,6 @@ player_die
 void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
 	int		n;
-
 	VectorClear (self->avelocity);
 
 	self->takedamage = DAMAGE_YES;
@@ -1208,7 +1206,7 @@ void PutClientInServer (edict_t *ent)
 	// clear entity state values
 	ent->s.effects = 0;
 	ent->s.modelindex = 255;		// will use the skin specified model
-	ent->s.modelindex2 = 255;		// custom gun model
+	ent->s.modelindex2 = 0;		// custom gun model
 	// sknum is player num and weapon number
 	// weapon number will be added in changeweapon
 	ent->s.skinnum = ent - g_edicts - 1;
@@ -1584,6 +1582,8 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	pmove_t	pm;
 	float specialMultiplier;
 
+	gi.dprintf("Client Think\n");
+
 	level.current_entity = ent;
 	client = ent->client;
 
@@ -1651,6 +1651,11 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		{
 			ent->s.origin[i] = pm.s.origin[i]*0.125;
 			ent->velocity[i] = pm.s.velocity[i]*0.125;
+			/*gi.bprintf(_DEBUG, "%i\n", pm.s.velocity[i]);
+			if(ent->velocity[i] * 1.08 < 200 && ent->velocity[i] * 1.08 > -200)
+			{
+				ent->velocity[i] *= 1.08;
+			}*/
 		}
 
 		VectorCopy (pm.mins, ent->mins);
