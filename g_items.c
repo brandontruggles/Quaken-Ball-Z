@@ -1142,7 +1142,8 @@ gitem_t	itemlist[] =
 		0,
 		&bodyarmor_info,
 		ARMOR_BODY,
-/* precache */ ""
+/* precache */ "",
+		""
 	},
 
 /*QUAKED item_armor_combat (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -1165,7 +1166,8 @@ gitem_t	itemlist[] =
 		0,
 		&combatarmor_info,
 		ARMOR_COMBAT,
-/* precache */ ""
+/* precache */ "",
+		""
 	},
 
 /*QUAKED item_armor_jacket (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -1188,7 +1190,8 @@ gitem_t	itemlist[] =
 		0,
 		&jacketarmor_info,
 		ARMOR_JACKET,
-/* precache */ ""
+/* precache */ "",
+		""
 	},
 
 /*QUAKED item_armor_shard (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -1211,7 +1214,8 @@ gitem_t	itemlist[] =
 		0,
 		NULL,
 		ARMOR_SHARD,
-/* precache */ ""
+/* precache */ "",
+		""
 	},
 
 
@@ -1235,7 +1239,8 @@ gitem_t	itemlist[] =
 		0,
 		NULL,
 		0,
-/* precache */ ""
+/* precache */ "",
+		""
 	},
 
 /*QUAKED item_power_shield (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -1258,7 +1263,8 @@ gitem_t	itemlist[] =
 		0,
 		NULL,
 		0,
-/* precache */ "misc/power2.wav misc/power1.wav"
+/* precache */ "misc/power2.wav misc/power1.wav",
+		""
 	},
 
 
