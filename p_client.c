@@ -1629,11 +1629,6 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			pm.s.velocity[i] = ent->velocity[i]*8;
 		}
 
-		gi.bprintf(_DEBUG, "New: %i\n", pm.s.velocity[0]);
-		gi.bprintf(_DEBUG, "Old: %i\n", client->old_pmove.velocity[0]);
-		if(pm.s.velocity[0] != client->old_pmove.velocity[0])
-			gi.bprintf(_DEBUG, "Changed!\n");
-
 		if (memcmp(&client->old_pmove, &pm.s, sizeof(pm.s)))
 		{
 			pm.snapinitial = true;

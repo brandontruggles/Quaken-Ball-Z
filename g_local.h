@@ -242,6 +242,7 @@ typedef struct gitem_s
 	int			tag;
 
 	char		*precaches;		// string of all models, sounds, and images this item will use
+	char		*dbzname;
 } gitem_t;
 
 

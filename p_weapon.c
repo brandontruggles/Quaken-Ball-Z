@@ -168,6 +168,7 @@ void ChangeWeapon (edict_t *ent)
 
 	ent->client->pers.lastweapon = ent->client->pers.weapon;
 	ent->client->pers.weapon = ent->client->newweapon;
+	gi.cprintf (ent, PRINT_HIGH, "You selected your %s attack!\n", ent->client->newweapon->dbzname);
 	ent->client->newweapon = NULL;
 	ent->client->machinegun_shots = 0;
 
@@ -486,6 +487,10 @@ void Weapon_Generic (edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 					ent->client->charge_counter = 0; //Stop the current ki blast from charging and fire a small ki blast if possible
 					if(ent->client->ki_value >= 5)
 						Weapon_Blaster_Fire(ent);
+					else
+					{
+						gi.cprintf (ent, PRINT_HIGH, "You do not have enough Ki to use this attack!\n");
+					}
 				}
 			}
 
@@ -768,8 +773,7 @@ void activate_super_saiyan(edict_t * ent)
 	ent->client->inKaioKen = false;
 	ent->client->inSuperSaiyan = true;
 	ent->client->quad_framenum = level.framenum + 300;
-	
-	gi.bprintf(_DEBUG, "Activated super saiyan!\n");
+	gi.cprintf (ent, PRINT_CHAT, "%s became Super Saiyan! They temporarily have quad damage and are lightning fast!\n", ent->client->pers.netname);
 	// send muzzle flash
 	gi.WriteByte (svc_muzzleflash);
 	gi.WriteShort (ent-g_edicts);
@@ -779,9 +783,13 @@ void activate_super_saiyan(edict_t * ent)
 
 void weapon_super_saiyan_fire(edict_t * ent)
 {
-	if(ent->client->ki_value == 100 && !ent->client->inKaioKen)
+	if(ent->client->ki_value == 100 && !ent->client->inSuperSaiyan)
 	{
 		activate_super_saiyan(ent);
+	}
+	else if(ent->client->ki_value < 100)
+	{
+		gi.cprintf (ent, PRINT_HIGH, "You do not have enough Ki to use this attack!\n");
 	}
 	ent->client->ps.gunframe++;
 }
@@ -1095,8 +1103,7 @@ void activate_kaio_ken(edict_t * ent)
 	ent->client->inSuperSaiyan = false;
 	ent->client->inKaioKen = true;
 	ent->client->quad_framenum = level.framenum + 300;
-	gi.bprintf(_DEBUG, "Value: %f\n", 0);
-	gi.bprintf(_DEBUG, "Activated kaio ken!\n");
+	gi.cprintf (ent, PRINT_CHAT, "%s activated their Kaio-Ken! They temporarily have double damage and are a little faster!\n", ent->client->pers.netname);
 	// send muzzle flash
 	gi.WriteByte (svc_muzzleflash);
 	gi.WriteShort (ent-g_edicts);
@@ -1109,6 +1116,10 @@ void weapon_kaio_ken_fire(edict_t * ent)
 	if(ent->client->ki_value >= 50 && !ent->client->inKaioKen)
 	{
 		activate_kaio_ken(ent);
+	}
+	else if(ent->client->ki_value < 50)
+	{
+		gi.cprintf (ent, PRINT_HIGH, "You do not have enough Ki to use this attack!\n");
 	}
 	ent->client->ps.gunframe++;
 }
@@ -1148,15 +1159,37 @@ void weapon_teleport_attack_fire(edict_t * ent)
 	v[YAW]   = ent->client->v_angle[YAW] - 5;
 	v[ROLL]  = ent->client->v_angle[ROLL];
 	AngleVectors (v, forward, NULL, NULL);
-	fire_teleport(ent, start, forward, damage, kick, MOD_SSHOTGUN);
+
+	if(ent->client->ki_value >= 10)
+	{
+		fire_teleport(ent, start, forward, damage, kick, MOD_SSHOTGUN);
+		ent->client->ki_value -= 10;
+	}
+	else
+	{
+		gi.cprintf (ent, PRINT_HIGH, "You do not have enough Ki to use this attack!\n");
+	}
 
 	ent->client->ps.gunframe++;
 	PlayerNoise(ent, start, PNOISE_WEAPON);
 }
 
-void weapon_Z_sword_fire(edict_t * ent)
+void weapon_solar_flare_fire(edict_t * ent)
 {
-
+	// send muzzle flash
+	if(ent->client->ki_value >= 10)
+	{
+		gi.WriteByte (svc_muzzleflash);
+		gi.WriteShort (ent-g_edicts);
+		gi.WriteByte (MZ_RESPAWN);
+		gi.multicast (ent->s.origin, MULTICAST_PVS);
+		ent->client->ki_value -= 10;
+	}
+	else
+	{
+		gi.cprintf (ent, PRINT_HIGH, "You do not have enough Ki to use this attack!\n");
+	}
+	ent->client->ps.gunframe++;
 }
 
 void weapon_special_beam_cannon_fire(edict_t * ent)
@@ -1204,6 +1237,10 @@ void weapon_special_beam_cannon_fire(edict_t * ent)
 
 		PlayerNoise(ent, start, PNOISE_WEAPON);
 	}
+	else
+	{
+		gi.cprintf (ent, PRINT_HIGH, "You do not have enough Ki to use this attack!\n");
+	}
 	ent->client->ps.gunframe++;
 }
 
@@ -1211,7 +1248,7 @@ void Weapon_Blaster (edict_t *ent)
 {
 	static int	pause_frames[]	= {19, 32, 0};
 	static int	fire_frames[]	= {5, 0};
-
+	
 	Weapon_Generic (ent, 4, 8, 52, 55, pause_frames, fire_frames, weapon_ki_fire);
 }
 
@@ -1287,7 +1324,7 @@ void Weapon_HyperBlaster_Fire (edict_t *ent)
 void Weapon_HyperBlaster (edict_t *ent)
 {
 	static int	pause_frames[]	= {22, 28, 34, 0};
-	static int	fire_frames[]	= {8, 9, 0};
+	static int	fire_frames[]	= {8, 0};
 
 	Weapon_Generic (ent, 7, 18, 36, 39, pause_frames, fire_frames, weapon_teleport_attack_fire);
 }
@@ -1825,9 +1862,9 @@ void weapon_bfg_fire (edict_t *ent)
 void Weapon_BFG (edict_t *ent)
 {
 	static int	pause_frames[]	= {39, 45, 50, 55, 0};
-	static int	fire_frames[]	= {9, 17, 0};
+	static int	fire_frames[]	= {9, 0};
 
-	Weapon_Generic (ent, 8, 32, 55, 58, pause_frames, fire_frames, weapon_bfg_fire);
+	Weapon_Generic (ent, 8, 32, 55, 58, pause_frames, fire_frames, weapon_solar_flare_fire);
 }
 
 
