@@ -559,7 +559,16 @@ void weapon_grenade_fire (edict_t *ent, qboolean held)
 
 	radius = damage+40;
 	if (is_quad)
-		damage *= 4;
+	{
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+		}
+	}
 
 	VectorSet(offset, 8, 8, ent->viewheight-8);
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
@@ -720,7 +729,16 @@ void weapon_grenadelauncher_fire (edict_t *ent)
 
 	radius = damage+40;
 	if (is_quad)
-		damage *= 4;
+	{
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+		}
+	}
 
 	VectorSet(offset, 8, 8, ent->viewheight-8);
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
@@ -749,9 +767,14 @@ void activate_super_saiyan(edict_t * ent)
 	ent->client->ki_value -= 100;
 	ent->client->inKaioKen = false;
 	ent->client->inSuperSaiyan = true;
-	VectorSet(ent->velocity, 100, 100, 100);
+	ent->client->quad_framenum = level.framenum + 300;
 	
 	gi.bprintf(_DEBUG, "Activated super saiyan!\n");
+	// send muzzle flash
+	gi.WriteByte (svc_muzzleflash);
+	gi.WriteShort (ent-g_edicts);
+	gi.WriteByte (MZ_RAILGUN);
+	gi.multicast (ent->s.origin, MULTICAST_PVS);
 }
 
 void weapon_super_saiyan_fire(edict_t * ent)
@@ -792,8 +815,14 @@ void Weapon_RocketLauncher_Fire (edict_t *ent)
 	damage_radius = 120;
 	if (is_quad)
 	{
-		damage *= 4;
-		radius_damage *= 4;
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+		}
 	}
 
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
@@ -843,7 +872,16 @@ void Blaster_Fire (edict_t *ent, vec3_t g_offset, int damage, qboolean hyper, in
 	vec3_t	offset;
 
 	if (is_quad)
-		damage *= 4;
+	{
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+		}
+	}
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
 	VectorSet(offset, 24, 8, ent->viewheight-8);
 	VectorAdd (offset, g_offset, offset);
@@ -917,8 +955,16 @@ void weapon_punch_fire(edict_t * ent) //Definition for punches (modified weapon_
 
 	if (is_quad)
 	{
-		damage *= 4;
-		kick *= 4;
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+			kick *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+			kick *= 2;
+		}
 	}
 
 	fire_punch (ent, start, forward, damage, kick, MOD_SHOTGUN);
@@ -946,8 +992,16 @@ void weapon_kick_fire (edict_t *ent) //Definition for kicks (modified weapon_sup
 
 	if (is_quad)
 	{
-		damage *= 4;
-		kick *= 4;
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+			kick *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+			kick *= 2;
+		}
 	}
 
 	v[PITCH] = ent->client->v_angle[PITCH];
@@ -984,8 +1038,16 @@ void weapon_ki_charge_fire(edict_t * ent)
 
 	if (is_quad)
 	{
-		damage *= 4;
-		kick *= 4;
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+			kick *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+			kick *= 2;
+		}
 	}
 
 	for (i=1 ; i<3 ; i++)
@@ -996,7 +1058,7 @@ void weapon_ki_charge_fire(edict_t * ent)
 	ent->client->kick_origin[0] = crandom() * 0.35;
 	ent->client->kick_angles[0] = ent->client->machinegun_shots * -1.5;
 
-	if(ent->client->charge_counter < 10)
+	if(ent->client->charge_counter < 1)
 	{
 		ent->client->charge_counter++;
 	}
@@ -1012,7 +1074,7 @@ void weapon_ki_charge_fire(edict_t * ent)
 	AngleVectors (angles, forward, right, NULL);
 	VectorSet(offset, 0, 0, ent->viewheight-40);
 	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
-	fire_charge_bullet (ent, start, forward, damage, kick, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_MACHINEGUN, TE_SPARKS);
+	fire_charge_bullet (ent, start, forward, damage, kick, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_MACHINEGUN, TE_FLECHETTE);
 
 	ent->client->anim_priority = ANIM_ATTACK;
 	if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
@@ -1032,8 +1094,14 @@ void activate_kaio_ken(edict_t * ent)
 	ent->client->ki_value -= 50;
 	ent->client->inSuperSaiyan = false;
 	ent->client->inKaioKen = true;
-	ent->moveinfo.speed = 40;
+	ent->client->quad_framenum = level.framenum + 300;
+	gi.bprintf(_DEBUG, "Value: %f\n", 0);
 	gi.bprintf(_DEBUG, "Activated kaio ken!\n");
+	// send muzzle flash
+	gi.WriteByte (svc_muzzleflash);
+	gi.WriteShort (ent-g_edicts);
+	gi.WriteByte (MZ_RAILGUN);
+	gi.multicast (ent->s.origin, MULTICAST_PVS);
 }
 
 void weapon_kaio_ken_fire(edict_t * ent)
@@ -1046,8 +1114,44 @@ void weapon_kaio_ken_fire(edict_t * ent)
 }
 
 void weapon_teleport_attack_fire(edict_t * ent)
-{
+{	
+	vec3_t		start;
+	vec3_t		forward, right;
+	vec3_t		offset;
+	vec3_t		v;
+	int			damage = 6;
+	int			kick = 12;
 
+	AngleVectors (ent->client->v_angle, forward, right, NULL);
+
+	VectorScale (forward, -2, ent->client->kick_origin);
+	ent->client->kick_angles[0] = -2;
+
+	VectorSet(offset, 0, 0,  ent->viewheight);
+	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
+
+	if (is_quad)
+	{
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+			kick *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+			kick *= 2;
+		}
+	}
+
+	v[PITCH] = ent->client->v_angle[PITCH];
+	v[YAW]   = ent->client->v_angle[YAW] - 5;
+	v[ROLL]  = ent->client->v_angle[ROLL];
+	AngleVectors (v, forward, NULL, NULL);
+	fire_teleport(ent, start, forward, damage, kick, MOD_SSHOTGUN);
+
+	ent->client->ps.gunframe++;
+	PlayerNoise(ent, start, PNOISE_WEAPON);
 }
 
 void weapon_Z_sword_fire(edict_t * ent)
@@ -1057,7 +1161,50 @@ void weapon_Z_sword_fire(edict_t * ent)
 
 void weapon_special_beam_cannon_fire(edict_t * ent)
 {
+	vec3_t		start;
+	vec3_t		forward, right;
+	vec3_t		offset;
+	int			damage;
+	int			kick;
+	
+	damage = 100;
+	kick = 200;
 
+	if (is_quad)
+	{
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+			kick *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+			kick *= 2;
+		}
+	}
+
+	AngleVectors (ent->client->v_angle, forward, right, NULL);
+
+	VectorScale (forward, -3, ent->client->kick_origin);
+	ent->client->kick_angles[0] = -3;
+
+	VectorSet(offset, 0, 7,  ent->viewheight-8);
+	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
+
+	if(ent->client->ki_value >= 20)
+	{
+		ent->client->ki_value -= 20;
+		fire_rail (ent, start, forward, damage, kick);
+		// send muzzle flash
+		gi.WriteByte (svc_muzzleflash);
+		gi.WriteShort (ent-g_edicts);
+		gi.WriteByte (MZ_RAILGUN | is_silenced);
+		gi.multicast (ent->s.origin, MULTICAST_PVS);
+
+		PlayerNoise(ent, start, PNOISE_WEAPON);
+	}
+	ent->client->ps.gunframe++;
 }
 
 void Weapon_Blaster (edict_t *ent)
@@ -1139,10 +1286,10 @@ void Weapon_HyperBlaster_Fire (edict_t *ent)
 
 void Weapon_HyperBlaster (edict_t *ent)
 {
-	static int	pause_frames[]	= {0};
-	static int	fire_frames[]	= {6, 7, 8, 9, 10, 11, 0};
+	static int	pause_frames[]	= {22, 28, 34, 0};
+	static int	fire_frames[]	= {8, 9, 0};
 
-	Weapon_Generic (ent, 5, 20, 49, 53, pause_frames, fire_frames, Weapon_HyperBlaster_Fire);
+	Weapon_Generic (ent, 7, 18, 36, 39, pause_frames, fire_frames, weapon_teleport_attack_fire);
 }
 
 /*
@@ -1189,8 +1336,16 @@ void Machinegun_Fire (edict_t *ent)
 
 	if (is_quad)
 	{
-		damage *= 4;
-		kick *= 4;
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+			kick *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+			kick *= 2;
+		}
 	}
 
 	for (i=1 ; i<3 ; i++)
@@ -1242,9 +1397,9 @@ void Machinegun_Fire (edict_t *ent)
 void Weapon_Machinegun (edict_t *ent)
 {
 	static int	pause_frames[]	= {23, 45, 0};
-	static int	fire_frames[]	= {4, 5, 0};
+	static int	fire_frames[]	= {4, 11};
 
-	Weapon_Generic (ent, 3, 5, 45, 49, pause_frames, fire_frames, weapon_ki_charge_fire);
+	Weapon_Generic (ent, 3, 10, 45, 49, pause_frames, fire_frames, weapon_ki_charge_fire);
 }
 
 void Chaingun_Fire (edict_t *ent)
@@ -1332,8 +1487,16 @@ void Chaingun_Fire (edict_t *ent)
 
 	if (is_quad)
 	{
-		damage *= 4;
-		kick *= 4;
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+			kick *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+			kick *= 2;
+		}
 	}
 
 	for (i=0 ; i<3 ; i++)
@@ -1408,8 +1571,16 @@ void weapon_shotgun_fire (edict_t *ent)
 
 	if (is_quad)
 	{
-		damage *= 4;
-		kick *= 4;
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+			kick *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+			kick *= 2;
+		}
 	}
 
 	if (deathmatch->value)
@@ -1458,8 +1629,16 @@ void weapon_supershotgun_fire (edict_t *ent)
 
 	if (is_quad)
 	{
-		damage *= 4;
-		kick *= 4;
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+			kick *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+			kick *= 2;
+		}
 	}
 
 	v[PITCH] = ent->client->v_angle[PITCH];
@@ -1523,8 +1702,16 @@ void weapon_railgun_fire (edict_t *ent)
 
 	if (is_quad)
 	{
-		damage *= 4;
-		kick *= 4;
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+			kick *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+			kick *= 2;
+		}
 	}
 
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
@@ -1555,7 +1742,7 @@ void Weapon_Railgun (edict_t *ent)
 	static int	pause_frames[]	= {56, 0};
 	static int	fire_frames[]	= {4, 0};
 
-	Weapon_Generic (ent, 3, 18, 56, 61, pause_frames, fire_frames, weapon_railgun_fire);
+	Weapon_Generic (ent, 3, 18, 56, 61, pause_frames, fire_frames, weapon_special_beam_cannon_fire);
 }
 
 
@@ -1603,14 +1790,23 @@ void weapon_bfg_fire (edict_t *ent)
 	}*/
 
 	if (is_quad)
-		damage *= 4;
+	{
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+		}
+	}
 
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
 
 	VectorScale (forward, -2, ent->client->kick_origin);
 
 	// make a big pitch kick with an inverse fall
-	ent->client->v_dmg_pitch = -40;
+	ent->client->v_dmg_pitch = -200;
 	ent->client->v_dmg_roll = crandom()*8;
 	ent->client->v_dmg_time = level.time + DAMAGE_TIME;
 

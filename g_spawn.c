@@ -754,11 +754,11 @@ char *dm_statusbar =
 "endif "
 
 // Ki Meter
-"if 18"
-	"xv 50 "
-	"yb -100 "
-	"string2 \"hi\" "
-"endif "
+"xl 20 "
+"yb -35 "
+"string \"Ki Meter:\" "
+"yb -25 "
+"num 3 18 "
 
 // chase camera
 "if 16 "

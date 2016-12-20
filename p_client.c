@@ -1582,6 +1582,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	edict_t	*other;
 	int		i, j;
 	pmove_t	pm;
+	float specialMultiplier;
 
 	level.current_entity = ent;
 	client = ent->client;
@@ -1619,6 +1620,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			client->ps.pmove.pm_type = PM_NORMAL;
 
 		client->ps.pmove.gravity = sv_gravity->value;
+
 		pm.s = client->ps.pmove;
 
 		for (i=0 ; i<3 ; i++)
@@ -1626,6 +1628,11 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			pm.s.origin[i] = ent->s.origin[i]*8;
 			pm.s.velocity[i] = ent->velocity[i]*8;
 		}
+
+		gi.bprintf(_DEBUG, "New: %i\n", pm.s.velocity[0]);
+		gi.bprintf(_DEBUG, "Old: %i\n", client->old_pmove.velocity[0]);
+		if(pm.s.velocity[0] != client->old_pmove.velocity[0])
+			gi.bprintf(_DEBUG, "Changed!\n");
 
 		if (memcmp(&client->old_pmove, &pm.s, sizeof(pm.s)))
 		{
