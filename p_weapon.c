@@ -168,7 +168,8 @@ void ChangeWeapon (edict_t *ent)
 
 	ent->client->pers.lastweapon = ent->client->pers.weapon;
 	ent->client->pers.weapon = ent->client->newweapon;
-	gi.cprintf (ent, PRINT_HIGH, "You selected your %s attack!\n", ent->client->newweapon->dbzname);
+	if(ent->client->newweapon)
+		gi.cprintf (ent, PRINT_HIGH, "You selected your %s attack!\n", ent->client->newweapon->dbzname);
 	ent->client->newweapon = NULL;
 	ent->client->machinegun_shots = 0;
 	

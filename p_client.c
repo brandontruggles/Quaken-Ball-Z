@@ -1582,8 +1582,6 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	pmove_t	pm;
 	float specialMultiplier;
 
-	gi.dprintf("Client Think\n");
-
 	level.current_entity = ent;
 	client = ent->client;
 

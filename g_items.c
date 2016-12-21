@@ -1468,6 +1468,7 @@ always owned, never in the world
 /*QUAKED weapon_hyperblaster (.3 .3 1) (-16 -16 -16) (16 16 16)
 */
 	{
+
 		"weapon_hyperblaster", 
 		Pickup_Weapon,
 		Use_Weapon,
