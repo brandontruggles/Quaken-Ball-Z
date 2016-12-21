@@ -360,6 +360,7 @@ void Cmd_Noclip_f (edict_t *ent)
 	else
 	{
 		ent->movetype = MOVETYPE_NOCLIP;
+		
 		msg = "noclip ON\n";
 	}
 

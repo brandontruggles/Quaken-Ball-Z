@@ -1580,8 +1580,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	edict_t	*other;
 	int		i, j;
 	pmove_t	pm;
-	float specialMultiplier;
-
+	
 	level.current_entity = ent;
 	client = ent->client;
 
@@ -1594,7 +1593,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			level.exitintermission = true;
 		return;
 	}
-
+	
 	pm_passent = ent;
 
 	if (ent->client->chase_target) {
@@ -1649,11 +1648,6 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		{
 			ent->s.origin[i] = pm.s.origin[i]*0.125;
 			ent->velocity[i] = pm.s.velocity[i]*0.125;
-			/*gi.bprintf(_DEBUG, "%i\n", pm.s.velocity[i]);
-			if(ent->velocity[i] * 1.08 < 200 && ent->velocity[i] * 1.08 > -200)
-			{
-				ent->velocity[i] *= 1.08;
-			}*/
 		}
 
 		VectorCopy (pm.mins, ent->mins);
@@ -1710,6 +1704,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	}
 
 	client->oldbuttons = client->buttons;
+	
 	client->buttons = ucmd->buttons;
 	client->latched_buttons |= client->buttons & ~client->oldbuttons;
 

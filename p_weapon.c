@@ -778,7 +778,7 @@ void activate_super_saiyan(edict_t * ent)
 	// send muzzle flash
 	gi.WriteByte (svc_muzzleflash);
 	gi.WriteShort (ent-g_edicts);
-	gi.WriteByte (MZ_RAILGUN);
+	gi.WriteByte (MZ_RESPAWN);
 	gi.multicast (ent->s.origin, MULTICAST_PVS);
 }
 
@@ -857,12 +857,62 @@ void Weapon_RocketLauncher_Fire (edict_t *ent)
 		ent->client->pers.inventory[ent->client->ammo_index]--;
 }
 
+void weapon_reverse_teleport_attack_fire(edict_t * ent)
+{	
+	vec3_t		start;
+	vec3_t		forward, right;
+	vec3_t		offset;
+	vec3_t		v;
+	int			damage = 6;
+	int			kick = 12;
+
+	AngleVectors (ent->client->v_angle, forward, right, NULL);
+
+	VectorScale (forward, -2, ent->client->kick_origin);
+	ent->client->kick_angles[0] = -2;
+
+	VectorSet(offset, 0, 0,  ent->viewheight);
+	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
+
+	if (is_quad)
+	{
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+			kick *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+			kick *= 2;
+		}
+	}
+
+	v[PITCH] = ent->client->v_angle[PITCH];
+	v[YAW]   = ent->client->v_angle[YAW] - 5;
+	v[ROLL]  = ent->client->v_angle[ROLL];
+	AngleVectors (v, forward, NULL, NULL);
+
+	if(ent->client->ki_value >= 10)
+	{
+		fire_reverse_teleport(ent, start, forward, damage, kick, MOD_SSHOTGUN);
+		ent->client->ki_value -= 10;
+	}
+	else
+	{
+		gi.cprintf (ent, PRINT_HIGH, "You do not have enough Ki to use this attack!\n");
+	}
+
+	ent->client->ps.gunframe++;
+	PlayerNoise(ent, start, PNOISE_WEAPON);
+}
+
 void Weapon_RocketLauncher (edict_t *ent)
 {
 	static int	pause_frames[]	= {25, 33, 42, 50, 0};
 	static int	fire_frames[]	= {5, 0};
 
-	Weapon_Generic (ent, 4, 12, 50, 54, pause_frames, fire_frames, Weapon_RocketLauncher_Fire);
+	Weapon_Generic (ent, 4, 12, 50, 54, pause_frames, fire_frames, weapon_reverse_teleport_attack_fire);
 }
 
 
@@ -1108,7 +1158,7 @@ void activate_kaio_ken(edict_t * ent)
 	// send muzzle flash
 	gi.WriteByte (svc_muzzleflash);
 	gi.WriteShort (ent-g_edicts);
-	gi.WriteByte (MZ_RAILGUN);
+	gi.WriteByte (MZ_ETF_RIFLE);
 	gi.multicast (ent->s.origin, MULTICAST_PVS);
 }
 
@@ -1177,20 +1227,52 @@ void weapon_teleport_attack_fire(edict_t * ent)
 
 void weapon_solar_flare_fire(edict_t * ent)
 {
-	// send muzzle flash
+	vec3_t		start;
+	vec3_t		forward, right;
+	vec3_t		offset;
+	vec3_t		v;
+	int			damage = 6;
+	int			kick = 12;
+
+	AngleVectors (ent->client->v_angle, forward, right, NULL);
+
+	VectorScale (forward, -2, ent->client->kick_origin);
+	ent->client->kick_angles[0] = -2;
+
+	VectorSet(offset, 0, 0,  ent->viewheight);
+	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
+
+	if (is_quad)
+	{
+		if(ent->client->inSuperSaiyan)
+		{
+			damage *= 4;
+			kick *= 4;
+		}
+		else if(ent->client->inKaioKen)
+		{
+			damage *= 2;
+			kick *= 2;
+		}
+	}
+
+	v[PITCH] = ent->client->v_angle[PITCH];
+	v[YAW]   = ent->client->v_angle[YAW] - 5;
+	v[ROLL]  = ent->client->v_angle[ROLL];
+	AngleVectors (v, forward, NULL, NULL);
+
 	if(ent->client->ki_value >= 10)
 	{
-		gi.WriteByte (svc_muzzleflash);
-		gi.WriteShort (ent-g_edicts);
-		gi.WriteByte (MZ_RESPAWN);
-		gi.multicast (ent->s.origin, MULTICAST_PVS);
+		fire_slow(ent, start, forward, damage, kick, MOD_SSHOTGUN);
 		ent->client->ki_value -= 10;
 	}
 	else
 	{
 		gi.cprintf (ent, PRINT_HIGH, "You do not have enough Ki to use this attack!\n");
 	}
+
 	ent->client->ps.gunframe++;
+	PlayerNoise(ent, start, PNOISE_WEAPON);
 }
 
 void weapon_special_beam_cannon_fire(edict_t * ent)
@@ -1237,10 +1319,6 @@ void weapon_special_beam_cannon_fire(edict_t * ent)
 		gi.multicast (ent->s.origin, MULTICAST_PVS);
 
 		PlayerNoise(ent, start, PNOISE_WEAPON);
-	}
-	else
-	{
-		gi.cprintf (ent, PRINT_HIGH, "You do not have enough Ki to use this attack!\n");
 	}
 	ent->client->ps.gunframe++;
 }

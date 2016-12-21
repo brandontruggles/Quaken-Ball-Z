@@ -90,7 +90,7 @@ qboolean fire_hit (edict_t *self, vec3_t aim, int damage, int kick)
 
 	// do the damage
 	T_Damage (tr.ent, self, self, dir, point, vec3_origin, damage, kick/2, DAMAGE_NO_KNOCKBACK, MOD_HIT);
-
+	
 	if (!(tr.ent->svflags & SVF_MONSTER) && (!tr.ent->client))
 		return false;
 
@@ -255,6 +255,51 @@ static void fire_teleport_lead (edict_t *self, vec3_t start, vec3_t aimdir, int 
 	}
 }
 
+static void fire_reverse_teleport_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int te_impact, int mod)
+{
+	trace_t		tr;
+	vec3_t		dir;
+	vec3_t		forward, right, up;
+	vec3_t		end;
+	float		r;
+	float		u;
+	vec3_t		water_start;
+	qboolean	water = false;
+	int			content_mask = MASK_SHOT | MASK_WATER;
+
+	tr = gi.trace (self->s.origin, NULL, NULL, start, self, MASK_SHOT);
+	if (!(tr.fraction < 1.0))
+	{
+		vectoangles (aimdir, dir);
+		AngleVectors (dir, forward, right, up);
+
+		VectorMA (start, 8192, forward, end);
+		VectorMA (end, r, right, end);
+		VectorMA (end, u, up, end);
+
+		if (gi.pointcontents (start) & MASK_WATER)
+		{
+			water = true;
+			VectorCopy (start, water_start);
+			content_mask &= ~MASK_WATER;
+		}
+
+		tr = gi.trace (start, NULL, NULL, end, self, content_mask);	
+	}
+	// send gun puff / flash
+	if (!((tr.surface) && (tr.surface->flags & SURF_SKY)))
+	{
+		if (tr.fraction < 1.0)
+		{
+			if (tr.ent->takedamage)
+			{
+				T_Damage (tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal, damage, kick, DAMAGE_BULLET, mod);
+				VectorSet(tr.ent->s.origin, tr.ent->s.origin[0], tr.ent->s.origin[1], tr.ent->s.origin[2]+200);
+			}
+		}
+	}
+}
+
 static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int te_impact, int hspread, int vspread, int mod)
 {
 	trace_t		tr;
@@ -391,9 +436,134 @@ static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 
 static void fire_charge_lead(edict_t *self, int damage, int kick, int te_impact, int hspread, int vspread, int mod)
 {
-	int i;
-	for(i = 0; i < 9; i++)
-		fire_lead(self, self->s.origin, vec3_origin, damage, kick, te_impact, hspread, vspread, mod);
+	fire_lead(self, self->s.origin, vec3_origin, damage, kick, te_impact, hspread, vspread, mod);
+}
+
+static void fire_slow_lead(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int te_impact, int mod)
+{
+	trace_t		tr;
+	vec3_t		dir;
+	vec3_t		forward, right, up;
+	vec3_t		end;
+	float		r;
+	float		u;
+	vec3_t		water_start;
+	qboolean	water = false;
+	int			content_mask = MASK_SHOT | MASK_WATER;
+
+	tr = gi.trace (self->s.origin, NULL, NULL, start, self, MASK_SHOT);
+	if (!(tr.fraction < 1.0))
+	{
+		vectoangles (aimdir, dir);
+		AngleVectors (dir, forward, right, up);
+
+		VectorMA (start, 8192, forward, end);
+		VectorMA (end, r, right, end);
+		VectorMA (end, u, up, end);
+
+		if (gi.pointcontents (start) & MASK_WATER)
+		{
+			water = true;
+			VectorCopy (start, water_start);
+			content_mask &= ~MASK_WATER;
+		}
+
+		tr = gi.trace (start, NULL, NULL, end, self, content_mask);
+
+		// see if we hit water
+		if (tr.contents & MASK_WATER)
+		{
+			int		color;
+
+			water = true;
+			VectorCopy (tr.endpos, water_start);
+
+			if (!VectorCompare (start, tr.endpos))
+			{
+				if (tr.contents & CONTENTS_WATER)
+				{
+					if (strcmp(tr.surface->name, "*brwater") == 0)
+						color = SPLASH_BROWN_WATER;
+					else
+						color = SPLASH_BLUE_WATER;
+				}
+				else if (tr.contents & CONTENTS_SLIME)
+					color = SPLASH_SLIME;
+				else if (tr.contents & CONTENTS_LAVA)
+					color = SPLASH_LAVA;
+				else
+					color = SPLASH_UNKNOWN;
+
+				if (color != SPLASH_UNKNOWN)
+				{
+					gi.WriteByte (svc_temp_entity);
+					gi.WriteByte (TE_SPLASH);
+					gi.WriteByte (8);
+					gi.WritePosition (tr.endpos);
+					gi.WriteDir (tr.plane.normal);
+					gi.WriteByte (color);
+					gi.multicast (tr.endpos, MULTICAST_PVS);
+				}
+
+				// change bullet's course when it enters water
+				VectorSubtract (end, start, dir);
+				vectoangles (dir, dir);
+				AngleVectors (dir, forward, right, up);
+			}
+
+			// re-trace ignoring water this time
+			tr = gi.trace (water_start, NULL, NULL, end, self, MASK_SHOT);
+		}
+	}
+
+	// send gun puff / flash
+	if (!((tr.surface) && (tr.surface->flags & SURF_SKY)))
+	{
+		if (tr.fraction < 1.0)
+		{
+			if (tr.ent->takedamage)
+			{
+				T_Damage (tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal, damage, kick, DAMAGE_BULLET, mod);
+			}
+			else
+			{
+				if (strncmp (tr.surface->name, "sky", 3) != 0)
+				{
+					gi.WriteByte (svc_temp_entity);
+					gi.WriteByte (te_impact);
+					gi.WritePosition (tr.endpos);
+					gi.WriteDir (tr.plane.normal);
+					gi.multicast (tr.endpos, MULTICAST_PVS);
+
+					if (self->client)
+						PlayerNoise(self, tr.endpos, PNOISE_IMPACT);
+				}
+			}
+		}
+	}
+
+	// if went through water, determine where the end and make a bubble trail
+	if (water)
+	{
+		vec3_t	pos;
+
+		VectorSubtract (tr.endpos, water_start, dir);
+		VectorNormalize (dir);
+		VectorMA (tr.endpos, -2, dir, pos);
+		if (gi.pointcontents (pos) & MASK_WATER)
+			VectorCopy (pos, tr.endpos);
+		else
+			tr = gi.trace (pos, NULL, NULL, water_start, tr.ent, MASK_WATER);
+
+		VectorAdd (water_start, tr.endpos, pos);
+		VectorScale (pos, 0.5, pos);
+
+		gi.WriteByte (svc_temp_entity);
+		gi.WriteByte (TE_BUBBLETRAIL);
+		gi.WritePosition (water_start);
+		gi.WritePosition (tr.endpos);
+		gi.multicast (pos, MULTICAST_PVS);
+	}
 }
 
 
@@ -413,6 +583,11 @@ void fire_bullet (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int ki
 void fire_charge_bullet(edict_t *self, vec3_t start, vec3_t aimdir,  int damage, int kick, int hspread, int vspread, int mod, temp_event_t tempEvent)
 {
 	fire_charge_lead(self, damage, kick, tempEvent, hspread, vspread, mod);
+}
+
+void fire_flash_bullet(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int mod, temp_event_t tempEvent)
+{
+	fire_slow_lead(self, start, aimdir, damage, kick, tempEvent, mod);
 }
 
 /*
@@ -443,6 +618,16 @@ void fire_kick(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick,
 void fire_teleport(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int mod)
 {
 	fire_teleport_lead(self, start, aimdir, damage, kick, TE_BFG_LASER, mod);
+}
+
+void fire_reverse_teleport(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int mod)
+{
+	fire_reverse_teleport_lead(self, start, aimdir, damage, kick, TE_BFG_LASER, mod);
+}
+
+void fire_slow(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int mod)
+{
+	fire_slow_lead(self, start, aimdir, damage, kick, TE_FLECHETTE, mod);
 }
 
 /*
