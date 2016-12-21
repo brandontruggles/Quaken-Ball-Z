@@ -892,6 +892,8 @@ struct gclient_s
 	int			latched_buttons;
 	int			ki_value;
 	int			charge_counter;
+	int			speed_counter;
+	int			speed_counter_counter;
 
 	qboolean	inKaioKen;
 	qboolean	inSuperSaiyan;

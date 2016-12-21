@@ -430,6 +430,11 @@ void G_SetStats (edict_t *ent)
 	//
 	// timers
 	//
+	if(ent->client->quad_framenum <= level.framenum)
+	{
+		ent->client->inKaioKen = false;
+		ent->client->inSuperSaiyan = false;
+	}
 	if (ent->client->quad_framenum > level.framenum)
 	{
 		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_quad");

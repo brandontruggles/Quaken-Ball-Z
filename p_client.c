@@ -524,6 +524,8 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	self->client->invincible_framenum = 0;
 	self->client->breather_framenum = 0;
 	self->client->enviro_framenum = 0;
+	self->client->inKaioKen = false;
+	self->client->inSuperSaiyan = false;
 	self->flags &= ~FL_POWER_ARMOR;
 
 	if (self->health < -40)
@@ -1183,7 +1185,7 @@ void PutClientInServer (edict_t *ent)
 	memset (&ent->client->ps, 0, sizeof(client->ps));
 
 	client->ki_value = 20;
-	
+
 	client->ps.pmove.origin[0] = spawn_origin[0]*8;
 	client->ps.pmove.origin[1] = spawn_origin[1]*8;
 	client->ps.pmove.origin[2] = spawn_origin[2]*8;
